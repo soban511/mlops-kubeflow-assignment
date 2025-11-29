@@ -1,6 +1,4 @@
 # DVC
-/data/raw_data.csv
-/data/processed_data.csv
 .dvc/cache
 .dvc/tmp
 
@@ -12,25 +10,25 @@ __pycache__/
 .Python
 env/
 venv/
-ENV/
-build/
-dist/
 *.egg-info/
+dist/
+build/
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# Model artifacts
-*.pkl
-*.joblib
-*.h5
-
-# Logs
-*.log
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Data files (tracked by DVC)
+/data/raw/*.csv
+/data/processed/*.csv
+
+# Model artifacts
+*.pkl
+*.joblib
+
+# Logs
+*.log
