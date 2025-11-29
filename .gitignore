@@ -1,0 +1,36 @@
+# DVC
+/data/raw_data.csv
+/data/processed_data.csv
+.dvc/cache
+.dvc/tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model artifacts
+*.pkl
+*.joblib
+*.h5
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
