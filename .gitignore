@@ -1,6 +1,7 @@
 # DVC
 .dvc/cache
 .dvc/tmp
+.dvc/plots
 
 # Python
 __pycache__/
@@ -10,25 +11,70 @@ __pycache__/
 .Python
 env/
 venv/
+ENV/
 *.egg-info/
 dist/
 build/
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Data files (tracked by DVC)
 /data/raw/*.csv
 /data/processed/*.csv
+!/data/raw/*.csv.dvc
 
 # Model artifacts
 *.pkl
 *.joblib
+/artifacts/*.joblib
+!/artifacts/.gitkeep
+
+# MLflow
+/mlruns/
+mlflow.db
 
 # Logs
 *.log
+logs/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Docker
+*.dockerignore
+
+# Environment variables
+.env
+.env.local
+
+# Metrics (if generated locally)
+/metrics/*.json
+!/metrics/.gitkeep
