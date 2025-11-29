@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1764436663902
+current_stage: None
+description: null
+last_updated_timestamp: 1764436663902
+name: BostonHousingRFModel
+run_id: 47ffb571bc6c4da688de9f863a7c4daf
+run_link: null
+source: file:///C:/Users/LENOVO%20T470/Documents/University/Semester%207/MLOPs/Assignments/Assignment4/mlops-kubeflow-assignment/mlruns/269733383008211305/47ffb571bc6c4da688de9f863a7c4daf/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/LENOVO%20T470/Documents/University/Semester%207/MLOPs/Assignments/Assignment4/mlops-kubeflow-assignment/mlruns/269733383008211305/47ffb571bc6c4da688de9f863a7c4daf/artifacts/model
+user_id: null
+version: 1

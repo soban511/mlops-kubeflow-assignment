@@ -1,0 +1,93 @@
+# PIPELINE DEFINITION
+# Name: data-extraction
+# Description: Extracts and loads the dataset from the specified path.
+# Inputs:
+#    data_path: str
+# Outputs:
+#    Output: str
+components:
+  comp-data-extraction:
+    executorLabel: exec-data-extraction
+    inputDefinitions:
+      parameters:
+        data_path:
+          description: Path to the raw data CSV file
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-data-extraction:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - data_extraction
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas==2.1.4'\
+          \ 'scikit-learn==1.3.2' 'numpy==1.24.3' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef data_extraction(data_path: str) -> str:\n    \"\"\"\n    Extracts\
+          \ and loads the dataset from the specified path.\n\n    Args:\n        data_path:\
+          \ Path to the raw data CSV file\n\n    Returns:\n        output_path: Path\
+          \ to the extracted data file\n\n    This component simulates data extraction.\
+          \ In production, you would use\n    'dvc get' or 'dvc import' to fetch versioned\
+          \ data from remote storage.\n    \"\"\"\n    import pandas as pd\n    import\
+          \ os\n\n    print(f\"[DATA EXTRACTION] Loading data from: {data_path}\"\
+          )\n\n    # Create output directory\n    output_dir = \"/tmp/data\"\n   \
+          \ os.makedirs(output_dir, exist_ok=True)\n    output_path = f\"{output_dir}/extracted_data.csv\"\
+          \n\n    # Load and save data\n    df = pd.read_csv(data_path)\n    df.to_csv(output_path,\
+          \ index=False)\n\n    print(f\"[DATA EXTRACTION] Data extracted successfully\"\
+          )\n    print(f\"[DATA EXTRACTION] Shape: {df.shape}\")\n    print(f\"[DATA\
+          \ EXTRACTION] Columns: {df.columns.tolist()}\")\n    print(f\"[DATA EXTRACTION]\
+          \ Output saved to: {output_path}\")\n\n    return output_path\n\n"
+        image: python:3.9
+pipelineInfo:
+  name: data-extraction
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: data-extraction
+    tasks:
+      data-extraction:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-data-extraction
+        inputs:
+          parameters:
+            data_path:
+              componentInputParameter: data_path
+        taskInfo:
+          name: data-extraction
+  inputDefinitions:
+    parameters:
+      data_path:
+        description: Path to the raw data CSV file
+        parameterType: STRING
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.0.1

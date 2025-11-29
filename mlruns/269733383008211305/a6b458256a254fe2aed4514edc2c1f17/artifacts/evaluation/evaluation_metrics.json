@@ -1,0 +1,14 @@
+{
+  "rmse": 2.7878807971879405,
+  "mae": 2.015223228594398,
+  "mse": 7.772279339329266,
+  "r2_score": 0.8940150227578272,
+  "mape": 10.992499453784985,
+  "accuracy_within_20_percent": 87.25490196078431,
+  "accuracy_within_10_percent": 63.725490196078425,
+  "num_test_samples": 102,
+  "mean_actual_price": 21.488235294117644,
+  "std_actual_price": 8.60580386839697,
+  "mean_predicted_price": 21.34482295993374,
+  "std_predicted_price": 7.790462013463696
+}

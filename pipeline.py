@@ -1,15 +1,10 @@
 """
-Kubeflow Pipeline Definition for MLOps Assignment
+Kubeflow Pipeline Definition for Boston Housing Price Prediction
+This file defines the complete ML pipeline by connecting all components.
 """
-from kfp import dsl
-from kfp import compiler
-import sys
-import os
 
-# Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-from pipeline_components import (
+from kfp import dsl, compiler
+from src.pipeline_components import (
     data_extraction,
     data_preprocessing,
     model_training,
@@ -18,72 +13,101 @@ from pipeline_components import (
 
 
 @dsl.pipeline(
-    name='Boston Housing ML Pipeline',
-    description='End-to-end ML pipeline for Boston Housing price prediction'
+    name='Boston Housing Price Prediction Pipeline',
+    description='End-to-end ML pipeline for predicting Boston housing prices using Random Forest'
 )
 def boston_housing_pipeline(
-    dataset_path: str = 'data/raw_data.csv',
-    test_size: float = 0.2,
+    data_path: str = '/data/raw_data.csv',
     n_estimators: int = 100,
-    max_depth: int = 10,
-    random_state: int = 42
+    max_depth: int = 10
 ):
     """
-    Complete ML pipeline with data extraction, preprocessing, training, and evaluation.
+    Complete ML Pipeline for Boston Housing Price Prediction.
+    
+    Pipeline Steps:
+    1. Data Extraction: Load the dataset
+    2. Data Preprocessing: Clean, scale, and split data
+    3. Model Training: Train Random Forest model
+    4. Model Evaluation: Evaluate model performance
     
     Args:
-        dataset_path: Path to the dataset
-        test_size: Proportion of data for testing
-        n_estimators: Number of trees in Random Forest
-        max_depth: Maximum depth of trees
-        random_state: Random seed for reproducibility
+        data_path: Path to the raw dataset CSV file
+        n_estimators: Number of trees in Random Forest (default: 100)
+        max_depth: Maximum depth of trees (default: 10)
     """
     
     # Step 1: Data Extraction
-    extract_task = data_extraction(
-        dataset_path=dataset_path
+    extraction_task = data_extraction(
+        data_path=data_path
     )
-    extract_task.set_display_name('Extract Data')
+    extraction_task.set_display_name('Extract Data')
     
     # Step 2: Data Preprocessing
-    preprocess_task = data_preprocessing(
-        input_data=extract_task.outputs['output_data'],
-        test_size=test_size,
-        random_state=random_state
+    preprocessing_task = data_preprocessing(
+        input_data_path=extraction_task.output
     )
-    preprocess_task.set_display_name('Preprocess Data')
-    preprocess_task.after(extract_task)
+    preprocessing_task.set_display_name('Preprocess Data')
+    preprocessing_task.after(extraction_task)
     
     # Step 3: Model Training
-    train_task = model_training(
-        train_data=preprocess_task.outputs['train_data'],
+    training_task = model_training(
+        train_data_path=preprocessing_task.outputs['train_data_path'],
         n_estimators=n_estimators,
-        max_depth=max_depth,
-        random_state=random_state
+        max_depth=max_depth
     )
-    train_task.set_display_name('Train Model')
-    train_task.after(preprocess_task)
+    training_task.set_display_name('Train Model')
+    training_task.after(preprocessing_task)
     
     # Step 4: Model Evaluation
-    eval_task = model_evaluation(
-        model_input=train_task.outputs['model_output'],
-        test_data=preprocess_task.outputs['test_data']
+    evaluation_task = model_evaluation(
+        model_path=training_task.output,
+        test_data_path=preprocessing_task.outputs['test_data_path']
     )
-    eval_task.set_display_name('Evaluate Model')
-    eval_task.after(train_task)
-
-
-def compile_pipeline():
-    """Compile the pipeline to YAML"""
-    output_file = 'pipeline.yaml'
+    evaluation_task.set_display_name('Evaluate Model')
+    evaluation_task.after(training_task)
     
-    print("Compiling Kubeflow pipeline...")
-    compiler.Compiler().compile(
-        pipeline_func=boston_housing_pipeline,
-        package_path=output_file
-    )
-    print(f"Pipeline compiled successfully to {output_file}")
+    # Print outputs for visibility
+    print(f"Pipeline created with parameters:")
+    print(f"  - Data path: {data_path}")
+    print(f"  - Number of estimators: {n_estimators}")
+    print(f"  - Max depth: {max_depth}")
 
 
-if __name__ == '__main__':
-    compile_pipeline()
+def compile_pipeline(output_path: str = 'pipeline.yaml'):
+    """
+    Compile the pipeline to a YAML file.
+    
+    Args:
+        output_path: Path where the compiled pipeline YAML will be saved
+    """
+    print("="*60)
+    print("COMPILING KUBEFLOW PIPELINE")
+    print("="*60)
+    print(f"\nPipeline Name: Boston Housing Price Prediction Pipeline")
+    print(f"Output file: {output_path}")
+    print("\nCompiling...")
+    
+    try:
+        compiler.Compiler().compile(
+            pipeline_func=boston_housing_pipeline,
+            package_path=output_path
+        )
+        print(f"\n✓ Pipeline compiled successfully!")
+        print(f"✓ YAML file saved to: {output_path}")
+        print("\n" + "="*60)
+        print("NEXT STEPS:")
+        print("="*60)
+        print("1. Ensure Minikube is running: minikube status")
+        print("2. Port-forward KFP UI: kubectl port-forward -n kubeflow svc/ml-pipeline-ui 8080:80")
+        print("3. Open browser: http://localhost:8080")
+        print("4. Upload and run the pipeline.yaml file")
+        print("="*60)
+        
+    except Exception as e:
+        print(f"\n✗ Error compiling pipeline: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    # Compile the pipeline when this script is run directly
+    compile_pipeline('pipeline.yaml')

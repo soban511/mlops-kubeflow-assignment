@@ -1,0 +1,137 @@
+# PIPELINE DEFINITION
+# Name: model-training
+# Description: Trains a Random Forest Regressor model on the training data.
+# Inputs:
+#    max_depth: int [Default: 10.0]
+#    n_estimators: int [Default: 100.0]
+#    train_data_path: str
+# Outputs:
+#    Output: str
+components:
+  comp-model-training:
+    executorLabel: exec-model-training
+    inputDefinitions:
+      parameters:
+        max_depth:
+          defaultValue: 10.0
+          description: 'Maximum depth of the trees (default: 10)'
+          isOptional: true
+          parameterType: NUMBER_INTEGER
+        n_estimators:
+          defaultValue: 100.0
+          description: 'Number of trees in the forest (default: 100)'
+          isOptional: true
+          parameterType: NUMBER_INTEGER
+        train_data_path:
+          description: Path to the training CSV file
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-model-training:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_training
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet     --no-warn-script-location 'pandas==2.1.4'\
+          \ 'scikit-learn==1.3.2' 'joblib==1.3.2' 'kfp==2.0.1' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          python3 -m kfp.components.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_training(train_data_path: str, n_estimators: int = 100,\
+          \ max_depth: int = 10) -> str:\n    \"\"\"\n    Trains a Random Forest Regressor\
+          \ model on the training data.\n\n    Args:\n        train_data_path: Path\
+          \ to the training CSV file\n        n_estimators: Number of trees in the\
+          \ forest (default: 100)\n        max_depth: Maximum depth of the trees (default:\
+          \ 10)\n\n    Returns:\n        model_path: Path to the saved model file\
+          \ (.joblib format)\n\n    This component trains a Random Forest model for\
+          \ house price prediction\n    and saves the trained model artifact for later\
+          \ evaluation and deployment.\n    \"\"\"\n    import pandas as pd\n    from\
+          \ sklearn.ensemble import RandomForestRegressor\n    import joblib\n   \
+          \ import os\n\n    print(\"[MODEL TRAINING] Starting model training...\"\
+          )\n    print(f\"[MODEL TRAINING] Loading training data from: {train_data_path}\"\
+          )\n\n    train_df = pd.read_csv(train_data_path)\n    print(f\"[MODEL TRAINING]\
+          \ Training data shape: {train_df.shape}\")\n\n    # Separate features and\
+          \ target\n    X_train = train_df.drop('PRICE', axis=1)\n    y_train = train_df['PRICE']\n\
+          \n    print(f\"[MODEL TRAINING] Features shape: {X_train.shape}\")\n   \
+          \ print(f\"[MODEL TRAINING] Target shape: {y_train.shape}\")\n\n    # Train\
+          \ Random Forest model\n    print(f\"[MODEL TRAINING] Training Random Forest\
+          \ with n_estimators={n_estimators}, max_depth={max_depth}\")\n\n    model\
+          \ = RandomForestRegressor(\n        n_estimators=n_estimators,\n       \
+          \ max_depth=max_depth,\n        random_state=42,\n        n_jobs=-1\n  \
+          \  )\n\n    model.fit(X_train, y_train)\n    print(\"[MODEL TRAINING] Model\
+          \ training completed\")\n\n    # Get feature importances\n    feature_importance\
+          \ = dict(zip(X_train.columns, model.feature_importances_))\n    top_features\
+          \ = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:5]\n\
+          \    print(\"[MODEL TRAINING] Top 5 important features:\")\n    for feat,\
+          \ importance in top_features:\n        print(f\"  - {feat}: {importance:.4f}\"\
+          )\n\n    # Save model\n    output_dir = \"/tmp/model\"\n    os.makedirs(output_dir,\
+          \ exist_ok=True)\n    model_path = f\"{output_dir}/model.joblib\"\n\n  \
+          \  joblib.dump(model, model_path)\n    print(f\"[MODEL TRAINING] Model saved\
+          \ to: {model_path}\")\n    print(\"[MODEL TRAINING] Training process completed\
+          \ successfully\")\n\n    return model_path\n\n"
+        image: python:3.9
+pipelineInfo:
+  name: model-training
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: model-training
+    tasks:
+      model-training:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-training
+        inputs:
+          parameters:
+            max_depth:
+              componentInputParameter: max_depth
+            n_estimators:
+              componentInputParameter: n_estimators
+            train_data_path:
+              componentInputParameter: train_data_path
+        taskInfo:
+          name: model-training
+  inputDefinitions:
+    parameters:
+      max_depth:
+        defaultValue: 10.0
+        description: 'Maximum depth of the trees (default: 10)'
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      n_estimators:
+        defaultValue: 100.0
+        description: 'Number of trees in the forest (default: 100)'
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      train_data_path:
+        description: Path to the training CSV file
+        parameterType: STRING
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.0.1

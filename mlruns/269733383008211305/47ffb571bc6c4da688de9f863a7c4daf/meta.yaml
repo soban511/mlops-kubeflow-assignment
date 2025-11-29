@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/LENOVO%20T470/Documents/University/Semester%207/MLOPs/Assignments/Assignment4/mlops-kubeflow-assignment/mlruns/269733383008211305/47ffb571bc6c4da688de9f863a7c4daf/artifacts
+end_time: 1764436663957
+entry_point_name: ''
+experiment_id: '269733383008211305'
+lifecycle_stage: active
+run_id: 47ffb571bc6c4da688de9f863a7c4daf
+run_name: 03_model_training
+run_uuid: 47ffb571bc6c4da688de9f863a7c4daf
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1764436654438
+status: 3
+tags: []
+user_id: LENOVO T470
